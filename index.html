@@ -172,7 +172,7 @@
 
     .chart-container {
       position: relative;
-      height: 300px;
+      height: 250px;
       width: 100%;
       overflow: visible;
       margin: 15px 0;
@@ -186,24 +186,47 @@
       margin-top: 10px; /* Add some space at the top */
     }
     @media (max-width: 768px) {
-  .chart-container {
-    height: 250px;
-  }
-  
-  #categoryChart-container {
-    height: 300px;
-  }
-}
+      .chart-container {
+        height: 220px;
+        margin: 10px 0;
+      }
+    
+      #categoryChart-container {
+        height: 300px;
+      }
+      .stats-section {
+        padding: 15px;
+        margin-bottom: 20px;
+      }
+      
+      .stats-section h2 {
+        font-size: 1.2rem;
+        margin-bottom: 15px;
+      }
+    } 
 
-@media (max-width: 480px) {
-  .chart-container {
-    height: 220px;
+    @media (max-width: 480px) {
+      .chart-container {
+        height: 200px;
+      }
+    
+      #categoryChart-container {
+      height: 270px;
+    } 
+    .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
   
-  #categoryChart-container {
-    height: 270px;
+  .stat-card {
+    padding: 12px;
+    min-height: 70px;
   }
-}
+  
+  .stat-number {
+    font-size: 1.5rem;
+  }
+    }
 
     #subcategoryChart {
       height: 300px;
@@ -1001,6 +1024,8 @@ function createCategoryChart(categoryData) {
   
   const categories = Object.keys(categoryData);
   const successRates = categories.map(cat => categoryData[cat].successRate);
+
+  const isMobile = window.innerWidth <= 768;
   
   return new Chart(ctx, {
     type: 'bar',
@@ -1011,7 +1036,9 @@ function createCategoryChart(categoryData) {
         data: successRates,
         backgroundColor: 'rgba(25, 118, 210, 0.7)',
         borderColor: 'rgba(25, 118, 210, 1)',
-        borderWidth: 1
+        borderWidth: 1,
+        barPercentage: isMobile ? 0.6 : 0.8, // Thinner bars on mobile
+        categoryPercentage: 0.8
       }]
     },
     options: {
@@ -1041,10 +1068,13 @@ function createCategoryChart(categoryData) {
         },
         x: {
           ticks: {
-            maxRotation: 45,
-            minRotation: 45,
+            maxRotation: isMobile ? 90 : 45, // More rotation on mobile
+            minRotation: isMobile ? 90 : 45,
             autoSkip: true,
-            maxTicksLimit: 10
+            maxTicksLimit: isMobile ? 5 : 10, // Fewer labels on mobile
+            font: {
+              size: isMobile ? 10 : 12
+            }
           }
         }
       },
@@ -1053,6 +1083,9 @@ function createCategoryChart(categoryData) {
           display: false
         },
         tooltip: {
+          enabled: !isMobile, // Disable tooltips on mobile (use tap instead)
+          mode: 'index',
+          intersect: false,
           callbacks: {
             label: function(context) {
               const category = context.label;
@@ -1105,6 +1138,8 @@ function createSubcategoryChart(subcategoryData) {
   const subcategories = Object.keys(subcategoryData);
   const successRates = subcategories.map(sub => subcategoryData[sub].successRate);
   
+  const isMobile = window.innerWidth <= 768;
+
   new Chart(ctx, {
     type: 'bar',
     data: {
@@ -1126,7 +1161,7 @@ function createSubcategoryChart(subcategoryData) {
           beginAtZero: true,
           max: 100,
           title: {
-            display: true,
+            display: !isMobile,
             text: 'Success Rate (%)'
           }
         }
