@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Flashcards</title>
   <style>
     body {
@@ -91,6 +92,8 @@
     .buttons {
       display: flex;
       gap: 10px;
+      justify-content: center;
+      padding-top: 10px;
     }
 
     button {
@@ -173,6 +176,7 @@
 
   <!-- Flashcard Screen -->
   <div id="flashcard-screen" class="hidden">
+    <div id="progress-bar" style="margin-bottom:10px; font-size:20px;">1/X</div>
     <div id="history-bar" style="margin-bottom:10px; font-size:20px;"></div> <!-- ✅ History here -->
     <div class="card-container">
       <div class="card" id="flashcard">
@@ -192,6 +196,7 @@
   <!-- End of Deck Screen -->
 <div id="end-screen" class="hidden" style="text-align:center;">
   <h2 id="end-message">You finished this set!</h2>
+  <h2 id="percentage-right"></h2>
   <button class="menu-button" onclick="goBackToMenu()">⬅ Back to Menu</button>
 </div>
 
@@ -238,9 +243,9 @@
       {word:"通り", meaning: "とおり - Calle",categoria: "2datanda",examen: "N3", subcategoria: "Sustantivos"},
     
     
-      {word: "taberu", meaning: "to eat",categoria: "3ertanda" ,examen: "N5", subcategoria: "colores"},
-      {word: "nomu", meaning: "to drink",categoria: "3ertanda" ,examen: "N5", subcategoria: "colores"},
-      {word: "miru", meaning: "to see",categoria: "3ertanda" ,examen: "N5", subcategoria: "colores"}
+      {word: "taberu", meaning: "to eat",categoria: "3ertanda" ,examen: "N5", subcategoria: "prueba"},
+      {word: "nomu", meaning: "to drink",categoria: "3ertanda" ,examen: "N5", subcategoria: "prueba"},
+      {word: "miru", meaning: "to see",categoria: "3ertanda" ,examen: "N5", subcategoria: "prueba"}
     
   ];
 
@@ -249,6 +254,7 @@
   let currentIndex = 0;
   let currentCard = null;
   let reviewWrongMode = false;
+  let rightAnswers = 0;
 
   const flashcard = document.getElementById("flashcard");
   const front = document.getElementById("front");
@@ -312,7 +318,6 @@
     currentIndex = 0;
     reviewWrongMode = false;
     showScreen("flashcard-screen");
-    updateProgressBar();
     loadCard();
   }
 
@@ -342,7 +347,8 @@ function startReviewWrong() {
       document.getElementById("history-bar").textContent = "";
       return;
     }
-
+    document.getElementById("progress-bar").textContent = (currentIndex+1) + "/" + currentSet.length;
+    if (!flashcard.classList.contains('flipped')) {
     currentCard = currentSet[currentIndex];
     front.textContent = currentCard.word;
     back.textContent = currentCard.meaning;
@@ -351,8 +357,19 @@ function startReviewWrong() {
     const history = getHistory(currentCard.word);
     document.getElementById("history-bar").textContent =
     "History: " + history.map(r => r === "R" ? "✅" : "❌").join(" ");
-
+    }
+    else{
     flashcard.classList.remove("flipped");
+    currentCard = currentSet[currentIndex];
+    front.textContent = currentCard.word;
+    // show meaning + recent history
+    const history = getHistory(currentCard.word);
+    document.getElementById("history-bar").textContent =
+    "History: " + history.map(r => r === "R" ? "✅" : "❌").join(" ");
+    setTimeout(function() {
+    back.textContent = currentCard.meaning;
+    }, 600); // 600 milliseconds = 0,6 seconds (lo que tarda en girar la carta)
+    }
   }
 
   flashcard.addEventListener("click", () => {
@@ -366,6 +383,7 @@ function startReviewWrong() {
     // Update wrongWords list
     if (isRight) {
       wrongWords = wrongWords.filter(c => c.word !== currentCard.word);
+      rightAnswers++;
     } else {
       if (!wrongWords.find(c => c.word === currentCard.word)) {
         wrongWords.push(currentCard);
@@ -381,7 +399,9 @@ function startReviewWrong() {
 
     currentIndex++;
     if (currentIndex >= currentSet.length) {
+    document.getElementById("percentage-right").textContent = "You got " + Math.trunc((rightAnswers/currentSet.length)*100) + "% right";
     showScreen("end-screen");
+    rightAnswers = 0;
     document.getElementById("end-message").textContent =
       reviewWrongMode ? "You finished reviewing your wrong cards!" : "You finished this set!";
     } else {
