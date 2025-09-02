@@ -27,7 +27,9 @@
     #menu h1 {
       margin-bottom: 20px;
     }
-
+    .hidden { 
+      display: none !important; /* Add !important to ensure it overrides other styles */
+    }
     .menu-button {
       display: block;
       margin: 10px auto;
@@ -253,50 +255,49 @@
   <button class="menu-button" onclick="goBackToMenu()">⬅ Back to Menu</button>
 </div>
 
-<!-- Stats screen -->
-<div id="stats" class="hidden screen-container">
-  <h1>Your Learning Statistics</h1>
-  
+<div id="stats" class="screen-container hidden">
   <div class="stats-section">
-    <h2>Overall Performance</h2>
+  <h2>Overall Performance</h2>
+  <div class="overall-stats-container">
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-number" id="total-cards">0</div>
-        <div class="stat-label">Total Cards</div>
+        <div class="stat-label">Cartas</div>
       </div>
       <div class="stat-card">
         <div class="stat-number" id="mastered-cards">0</div>
-        <div class="stat-label">Mastered</div>
+        <div class="stat-label">Perfectas</div>
       </div>
       <div class="stat-card">
         <div class="stat-number" id="success-rate">0%</div>
-        <div class="stat-label">Success Rate</div>
+        <div class="stat-label">Porcentaje de Correctas</div>
       </div>
     </div>
   </div>
+</div>
 
   <div class="stats-section">
-    <h2>Performance by Category</h2>
+    <h2>Performance por Categoria</h2>
     <div class="chart-container">
       <canvas id="categoryChart" width="400" height="250"></canvas>
     </div>
   </div>
 
   <div class="stats-section">
-    <h2>Performance by Subcategory</h2>
+    <h2>Performance por Subcategoria</h2>
     <div class="chart-container">
       <canvas id="subcategoryChart" width="400" height="300"></canvas>
     </div>
   </div>
 
   <div class="stats-section">
-    <h2>Recent Performance Trend</h2>
+    <h2>Performance Reciente</h2>
     <div class="chart-container">
       <canvas id="trendChart" width="400" height="250"></canvas>
     </div>
   </div>
 
-  <button class="back-menu" onclick="goBackToMenu()">⬅ Back to Menu</button>
+  <button class="back-menu" onclick="goBackToMenu()">⬅ Volver al Menu</button>
 </div>
 
 
@@ -1036,3 +1037,4 @@ function createTrendChart(trendData) {
 
 </body>
 </html>
+
