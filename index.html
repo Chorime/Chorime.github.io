@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Add this to the head section of your HTML -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <title>Flashcards</title>
+  <title>Kanji</title>
   <style>
     body {
       font-family: sans-serif;
@@ -15,6 +15,7 @@
       height: 100vh;
       margin: 0;
       background: #f0f0f0;
+      overflow: auto; 
     }
 
     .hidden { display: none; }
@@ -27,9 +28,7 @@
     #menu h1 {
       margin-bottom: 20px;
     }
-    .hidden { 
-      display: none !important; /* Add !important to ensure it overrides other styles */
-    }
+
     .menu-button {
       display: block;
       margin: 10px auto;
@@ -131,6 +130,13 @@
       padding: 20px;
       border-radius: 12px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 600px;
+      overflow: visible; /* Ensure charts aren't clipped */
+    }
+
+    .hidden { 
+      display: none !important; /* Add !important to ensure it overrides other styles */
     }
 
     .stats-section h2 {
@@ -166,24 +172,77 @@
 
     .chart-container {
       position: relative;
-      height: 250px;
+      height: 300px;
       width: 100%;
+      overflow: visible;
+      margin: 15px 0;
     }
+    
+    .chart-container canvas {
+      pointer-events: none; /* This prevents the canvas from capturing scroll events */
+    }
+    
+    #categoryChart-container {
+      margin-top: 10px; /* Add some space at the top */
+    }
+    @media (max-width: 768px) {
+  .chart-container {
+    height: 250px;
+  }
+  
+  #categoryChart-container {
+    height: 300px;
+  }
+}
+
+@media (max-width: 480px) {
+  .chart-container {
+    height: 220px;
+  }
+  
+  #categoryChart-container {
+    height: 270px;
+  }
+}
 
     #subcategoryChart {
       height: 300px;
     }
+
+    .overall-stats-container {
+  width: 100%;
+  max-width: 400px; /* Limit width to prevent overflow */
+  margin: 0 auto; /* Center the container */
+}
+
+/* Ensure the stats screen has proper spacing */
+#stats.screen-container {
+   display: block;
+  overflow-y: auto;
+  max-height: 90vh;
+  padding: 20px 15px;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
+#stats.screen-container h1 {
+  margin-top: 0;
+  padding-top: 10px;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 10;
+}
   </style>
 </head>
 <body>
 
   <!-- Menu -->
 <div id="menu">
-  <h1>Flashcards</h1>
+  <h1>Kanji</h1>
   <button class="menu-button" onclick="showScreen('tandas')">Tandas</button>
   <button class="menu-button" onclick="showScreen('examenes')">Examen</button>
   <button class="menu-button" onclick="showScreen('subcategorias')">Subcategorias</button>
-  <button class="menu-button" onclick="showScreen('review-options')">Review Wrong Cards</button>
+  <button class="menu-button" onclick="showScreen('review-options')">Repasar Errores</button>
   <button class="menu-button" onclick="showScreen('stats')">Estadisticas</button>
 </div>
 
@@ -193,7 +252,7 @@
   <button class="menu-button" onclick="StartTanda('2datanda')">Segunda Tanda</button>
   <button class="menu-button" onclick="StartTanda('3ertanda')">Tercera Tanda</button>
   <button class="menu-button" onclick="StartTanda('4tatanda')">Cuarta Tanda</button>
-  <button class="back-menu" onclick="goBackToMenu()">⬅ Back to Menu</button>
+  <button class="back-menu" onclick="goBackToMenu()">⬅ Volver al Menu</button>
 </div>
 
 <div id="examenes" class="hidden" style="text-align:center;">
@@ -202,7 +261,7 @@
   <button class="menu-button" onclick="StartExamen('N4')">N4</button>
   <button class="menu-button" onclick="StartExamen('N3')">N3</button>
   <button class="menu-button" onclick="StartExamen('N2')">N2</button>
-  <button class="back-menu" onclick="goBackToMenu()">⬅ Back to Menu</button>
+  <button class="back-menu" onclick="goBackToMenu()">⬅ Volver al Menu</button>
 </div>
 
 <div id="subcategorias" class="hidden" style="text-align:center;">
@@ -210,23 +269,23 @@
     <div id="subcategoria-container" class="subcategoria-grid">
       <!-- Dynamic content will be inserted here -->
     </div>
-    <button class="back-menu" onclick="goBackToMenu()">⬅ Back to Menu</button>
+    <button class="back-menu" onclick="goBackToMenu()">⬅ Volver al Menu</button>
   </div>
 
 <!-- Review Options -->
 <div id="review-options" class="hidden" style="text-align:center;">
-  <h2>Review Wrong Cards</h2>
-  <label for="wrongThreshold">Minimum wrongs in last 5 attempts:</label>
+  <h2>Repasar Errores</h2>
+  <label for="wrongThreshold">Minimo de errores en los ultimos 5 intentos:</label>
   <select id="wrongThreshold">
     <option value="1">1+</option>
     <option value="2">2+</option>
     <option value="3">3+</option>
     <option value="4">4+</option>
-    <option value="5">5 (always wrong)</option>
+    <option value="5">5 (siempre mal)</option>
   </select>
   <br><br>
-  <button class="menu-button" onclick="startReviewWrong()">Start Review</button>
-  <button class="back-menu" onclick="goBackToMenu()">⬅ Back to Menu</button>
+  <button class="menu-button" onclick="startReviewWrong()">Empezar Repaso</button>
+  <button class="back-menu" onclick="goBackToMenu()">⬅ Volver al Menu</button>
 </div>
 
   <!-- Flashcard Screen -->
@@ -241,20 +300,21 @@
     </div>
 
     <div class="buttons">
-      <button class="right" onclick="markAnswer(true)">Right</button>
-      <button class="wrong" onclick="markAnswer(false)">Wrong</button>
+      <button class="right" onclick="markAnswer(true)">Bien</button>
+      <button class="wrong" onclick="markAnswer(false)">Mal</button>
     </div>
 
-    <button class="back-menu" onclick="goBackToMenu()">⬅ Back to Menu</button>
+    <button class="back-menu" onclick="goBackToMenu()">⬅ Volver al Menu</button>
   </div>
   
   <!-- End of Deck Screen -->
 <div id="end-screen" class="hidden" style="text-align:center;">
-  <h2 id="end-message">You finished this set!</h2>
+  <h2 id="end-message">Terminaste esta tanda!</h2>
   <h2 id="percentage-right"></h2>
-  <button class="menu-button" onclick="goBackToMenu()">⬅ Back to Menu</button>
+  <button class="menu-button" onclick="goBackToMenu()">⬅ Volver al Menu</button>
 </div>
 
+<!-- Stats screen -->
 <div id="stats" class="screen-container hidden">
   <div class="stats-section">
   <h2>Overall Performance</h2>
@@ -334,7 +394,7 @@
       {word:"山", meaning: "やま - Montaña",categoria: "1ertanda",examen: "N5", subcategoria: "Sustantivos"},
       {word:"風", meaning: "かぜ - Viento",categoria: "1ertanda",examen: "N5", subcategoria: "Clima"},
       {word:"秋", meaning: "あき - Otoño",categoria: "1ertanda",examen: "N5", subcategoria: "Clima"},
-      {word:"私", meaning: "わたし - Yo",categoria: "1ertanda",examen: "N5", subcategoria: ""},
+      {word:"私", meaning: "わたし - Yo",categoria: "1ertanda",examen: "N5", subcategoria: "Extra"},
       {word:"南", meaning: "みなみ - Sur",categoria: "1ertanda",examen: "N5", subcategoria: "Sustantivos"},
       {word:"今", meaning: "いま - Ahora",categoria: "1ertanda",examen: "N5", subcategoria: "Sustantivos"},
       {word:"話す", meaning: "はなす - Hablar",categoria: "1ertanda",examen: "N5", subcategoria: "Verbos"},
@@ -349,7 +409,7 @@
       {word:"雪", meaning: "ゆき - Nieve",categoria: "1ertanda",examen: "N5", subcategoria: "Clima"},
       {word:"肉", meaning: "にく - Carne",categoria: "1ertanda",examen: "N5", subcategoria: "Sustantivos"},
       {word:"金", meaning: "かね - Dinero",categoria: "1ertanda",examen: "N3", subcategoria: "Sustantivos"},
-      {word:"何", meaning: "なに - Que",categoria: "1ertanda",examen: "N5", subcategoria: ""},
+      {word:"何", meaning: "なに - Que",categoria: "1ertanda",examen: "N5", subcategoria: "Extra"},
       {word:"円", meaning: "えん - Yenes",categoria: "1ertanda",examen: "N5", subcategoria: "Sustantivos"},
       {word:"夏", meaning: "なつ - Verano",categoria: "1ertanda",examen: "N5", subcategoria: "Clima"},
       {word:"読書", meaning: "どくしょ - Lectura",categoria: "1ertanda",examen: "N3", subcategoria: "Sustantivos"},
@@ -497,7 +557,7 @@ function startReviewWrong() {
   currentSet = filterWrongCards(threshold);
 
   if (currentSet.length === 0) {
-    alert("No cards match this condition!");
+    alert("Ninguna carta coincide con los parametros de busqueda!");
     return;
   }
 
@@ -585,11 +645,11 @@ function startReviewWrong() {
 
     currentIndex++;
     if (currentIndex >= currentSet.length) {
-    document.getElementById("percentage-right").textContent = "You got " + Math.trunc((rightAnswers/currentSet.length)*100) + "% right";
+    document.getElementById("percentage-right").textContent = "Hiciste " + Math.trunc((rightAnswers/currentSet.length)*100) + "% bien";
     showScreen("end-screen");
     rightAnswers = 0;
     document.getElementById("end-message").textContent =
-      reviewWrongMode ? "You finished reviewing your wrong cards!" : "You finished this set!";
+      reviewWrongMode ? "Terminaste de revisar las cartas en las que te confundiste!" : "Terminaste este Set!";
     } else {
     loadCard();
     }
@@ -645,6 +705,8 @@ function filterWrongCards(threshold) {
     if (id === "stats") {
       resetCanvases();
       displayStats();
+      setTimeout(enableStatsScrolling, 500);
+      setTimeout(adjustChartLayout, 300);
     }
   ["menu","tandas","examenes","stats","subcategorias","flashcard-screen", "review-options", "end-screen"].forEach(s =>
     document.getElementById(s).classList.add("hidden")
@@ -787,6 +849,32 @@ function calculateStats() {
   return stats;
 }
 
+// Add event listeners to handle scrolling on charts
+// Alternative approach: Use a passive event listener
+function enableStatsScrolling() {
+  const statsScreen = document.getElementById('stats');
+  if (!statsScreen || statsScreen.classList.contains('hidden')) return;
+  
+  const charts = statsScreen.querySelectorAll('.chart-container');
+  
+  charts.forEach(chart => {
+    // Add a passive wheel event listener to prevent default behavior
+    chart.addEventListener('wheel', function(e) {
+      const statsScreen = document.getElementById('stats');
+      if (statsScreen && statsScreen.scrollHeight > statsScreen.clientHeight) {
+        // Let the event bubble up to the stats screen
+        // We don't preventDefault here, we just let it bubble
+      }
+    }, { passive: true });
+  });
+  
+  // Ensure the stats screen itself is scrollable
+  statsScreen.addEventListener('wheel', function(e) {
+    // This ensures the stats screen captures the scroll event
+  }, { passive: true });
+}
+
+
 // Function to create trend chart
 function createTrendChart(trendData) {
   const canvas = document.getElementById('trendChart');
@@ -892,6 +980,7 @@ function displayStats() {
     }
 
     createTrendChart(stats.recentTrend);
+    setTimeout(enableStatsScrolling, 100);
     
   } catch (error) {
     console.error("Error displaying stats:", error);
@@ -902,17 +991,18 @@ function displayStats() {
 
 // Function to create category chart
 function createCategoryChart(categoryData) {
-  const ctx = document.getElementById('categoryChart').getContext('2d');
+  const canvas = document.getElementById('categoryChart');
+  const ctx = canvas.getContext('2d');
   
-  // Destroy existing chart if it exists
-  if (categoryChartInstance) {
-    categoryChartInstance.destroy();
+  // Check if chart already exists using Chart.js method
+  if (Chart.getChart(canvas)) {
+    Chart.getChart(canvas).destroy();
   }
-
+  
   const categories = Object.keys(categoryData);
   const successRates = categories.map(cat => categoryData[cat].successRate);
   
-  new Chart(ctx, {
+  return new Chart(ctx, {
     type: 'bar',
     data: {
       labels: categories,
@@ -927,18 +1017,68 @@ function createCategoryChart(categoryData) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: {
+        padding: {
+          top: 20,    // Add padding at the top
+          bottom: 10,
+          left: 10,
+          right: 10
+        }
+      },
       scales: {
         y: {
           beginAtZero: true,
           max: 100,
+          grace: '5%', // Add grace space at the top
           title: {
             display: true,
-            text: 'Success Rate (%)'
+            text: 'Success Rate (%)',
+            padding: {top: 10, bottom: 10}
+          },
+          ticks: {
+            precision: 0
+          }
+        },
+        x: {
+          ticks: {
+            maxRotation: 45,
+            minRotation: 45,
+            autoSkip: true,
+            maxTicksLimit: 10
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const category = context.label;
+              const attempts = categoryData[category].attempts;
+              const correct = categoryData[category].correct;
+              return `Success: ${context.parsed.y.toFixed(1)}% (${correct}/${attempts} correct)`;
+            }
           }
         }
       }
     }
   });
+}
+
+function adjustChartLayout() {
+  // Wait for the DOM to update
+  setTimeout(() => {
+    const chartContainers = document.querySelectorAll('.chart-container');
+    
+    chartContainers.forEach(container => {
+      const canvas = container.querySelector('canvas');
+      if (canvas && canvas.chart) {
+        canvas.chart.resize(); // Force chart to recalculate its layout
+      }
+    });
+  }, 100);
 }
 
 function destroyAllCharts() {
@@ -1037,4 +1177,3 @@ function createTrendChart(trendData) {
 
 </body>
 </html>
-
