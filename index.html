@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Add this to the head section of your HTML -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <title>Flashcards</title>
   <style>
     body {
@@ -119,6 +121,56 @@
       background: #888;
       color: white;
     }
+
+    /* Add these styles to your existing CSS */
+    .stats-section {
+      margin-bottom: 30px;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .stats-section h2 {
+      margin-top: 0;
+      color: #1976d2;
+      font-size: 1.4rem;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: #f5f7fa;
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #1976d2;
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 250px;
+      width: 100%;
+    }
+
+    #subcategoryChart {
+      height: 300px;
+    }
   </style>
 </head>
 <body>
@@ -130,6 +182,7 @@
   <button class="menu-button" onclick="showScreen('examenes')">Examen</button>
   <button class="menu-button" onclick="showScreen('subcategorias')">Subcategorias</button>
   <button class="menu-button" onclick="showScreen('review-options')">Review Wrong Cards</button>
+  <button class="menu-button" onclick="showScreen('stats')">Estadisticas</button>
 </div>
 
 <div id="tandas" class="hidden" style="text-align:center;">
@@ -200,8 +253,55 @@
   <button class="menu-button" onclick="goBackToMenu()">⬅ Back to Menu</button>
 </div>
 
+<!-- Stats screen -->
+<div id="stats" class="hidden screen-container">
+  <h1>Your Learning Statistics</h1>
+  
+  <div class="stats-section">
+    <h2>Overall Performance</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-number" id="total-cards">0</div>
+        <div class="stat-label">Total Cards</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="mastered-cards">0</div>
+        <div class="stat-label">Mastered</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="success-rate">0%</div>
+        <div class="stat-label">Success Rate</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-section">
+    <h2>Performance by Category</h2>
+    <div class="chart-container">
+      <canvas id="categoryChart" width="400" height="250"></canvas>
+    </div>
+  </div>
+
+  <div class="stats-section">
+    <h2>Performance by Subcategory</h2>
+    <div class="chart-container">
+      <canvas id="subcategoryChart" width="400" height="300"></canvas>
+    </div>
+  </div>
+
+  <div class="stats-section">
+    <h2>Recent Performance Trend</h2>
+    <div class="chart-container">
+      <canvas id="trendChart" width="400" height="250"></canvas>
+    </div>
+  </div>
+
+  <button class="back-menu" onclick="goBackToMenu()">⬅ Back to Menu</button>
+</div>
+
 
   <script>
+    console.log("Chart.js available:", typeof Chart !== "undefined");
   // Card sets
   const allCards = [
           // {word:"", meaning: "",categoria: "",examen: "", subcategoria: ""},
@@ -320,6 +420,9 @@
   let currentCard = null;
   let reviewWrongMode = false;
   let rightAnswers = 0;
+  let categoryChartInstance = null;
+  let subcategoryChartInstance = null;
+  let trendChartInstance = null;
 
   const flashcard = document.getElementById("flashcard");
   const front = document.getElementById("front");
@@ -420,8 +523,15 @@ function startReviewWrong() {
 
     // show meaning + recent history
     const history = getHistory(currentCard.word);
+    const displayHistory = history.map(item => {
+    if (typeof item === 'string') {
+      return item === "R" ? "✅" : "❌";
+    } else {
+      return item.result === "R" ? "✅" : "❌";
+    }
+    });
     document.getElementById("history-bar").textContent =
-    "History: " + history.map(r => r === "R" ? "✅" : "❌").join(" ");
+    "History: " + displayHistory.join(" ");
     }
     else{
     flashcard.classList.remove("flipped");
@@ -429,8 +539,15 @@ function startReviewWrong() {
     front.textContent = currentCard.word;
     // show meaning + recent history
     const history = getHistory(currentCard.word);
+      const displayHistory = history.map(item => {
+    if (typeof item === 'string') {
+      return item === "R" ? "✅" : "❌";
+    } else {
+      return item.result === "R" ? "✅" : "❌";
+    }
+    });
     document.getElementById("history-bar").textContent =
-    "History: " + history.map(r => r === "R" ? "✅" : "❌").join(" ");
+    "History: " + displayHistory.join(" ");
     setTimeout(function() {
     back.textContent = currentCard.meaning;
     }, 600); // 600 milliseconds = 0,6 seconds (lo que tarda en girar la carta)
@@ -458,8 +575,11 @@ function startReviewWrong() {
 
     // Update history
     let history = getHistory(cardId);
-    history.push(isRight ? "R" : "W");
-    if (history.length > 5) history.shift(); // keep last 5
+    history.push({
+    result: isRight ? "R" : "W",
+    timestamp: new Date().toISOString()
+    });
+    if (history.length > 10) history.shift(); // keep last 10
     localStorage.setItem("history_" + cardId, JSON.stringify(history));
 
     currentIndex++;
@@ -488,7 +608,17 @@ function filterWrongCards(threshold) {
 }
 
   function getHistory(cardId) {
-    return JSON.parse(localStorage.getItem("history_" + cardId)) || [];
+    const history =  JSON.parse(localStorage.getItem("history_" + cardId)) || [];
+    if (history.length > 0 && typeof history[0] === 'string') {
+    const newHistory = history.map(result => ({
+      result: result,
+      timestamp: new Date().toISOString() // Approximate timestamp
+    }));
+    localStorage.setItem("history_" + cardId, JSON.stringify(newHistory));
+    return newHistory;
+  }
+  
+  return history;
   }
 
 
@@ -497,20 +627,409 @@ function filterWrongCards(threshold) {
     const j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
   }
-}
+  }
 
   function goBackToMenu() {
+    rightAnswers = 0;
     showScreen("menu");
   }
 
   function showScreen(id) {
+    if (document.getElementById("stats") && !document.getElementById("stats").classList.contains("hidden")) {
+    destroyAllCharts();
+    }
     if (id === "subcategorias") {
       generateSubcategoriaButtons();
     }
-  ["menu","tandas","examenes","subcategorias","flashcard-screen", "review-options", "end-screen"].forEach(s =>
+    if (id === "stats") {
+      resetCanvases();
+      displayStats();
+    }
+  ["menu","tandas","examenes","stats","subcategorias","flashcard-screen", "review-options", "end-screen"].forEach(s =>
     document.getElementById(s).classList.add("hidden")
   );
   document.getElementById(id).classList.remove("hidden");
+  }
+  
+  function resetCanvases() {
+  // Get all canvas elements
+  const canvases = document.querySelectorAll('canvas');
+  
+  // Replace each canvas with a clone to reset it completely
+  canvases.forEach(canvas => {
+    const clone = canvas.cloneNode(true);
+    canvas.parentNode.replaceChild(clone, canvas);
+  });
+}
+
+function calculateRecentPerformance() {
+  const recentTrend = [];
+  const today = new Date();
+  
+  // Create empty entries for the last 7 days
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(today.getDate() - i);
+    const dateString = date.toISOString().split('T')[0];
+    
+    recentTrend.push({
+      date: dateString,
+      correct: 0,
+      total: 0
+    });
+  }
+  
+  // Collect all answer history across all cards
+  let allAnswers = [];
+  
+  allCards.forEach(card => {
+    const history = getHistory(card.word);
+    history.forEach(entry => {
+      if (entry.timestamp) {
+        const answerDate = new Date(entry.timestamp).toISOString().split('T')[0];
+        allAnswers.push({
+          date: answerDate,
+          result: typeof entry === 'string' ? entry : entry.result
+        });
+      }
+    });
+  });
+  
+  // Count answers for each day
+  allAnswers.forEach(answer => {
+    const trendEntry = recentTrend.find(entry => entry.date === answer.date);
+    if (trendEntry) {
+      trendEntry.total++;
+      if (answer.result === 'R') {
+        trendEntry.correct++;
+      }
+    }
+  });
+  
+  return recentTrend;
+}
+
+
+// Function to calculate statistics
+function calculateStats() {
+  const stats = {
+    byCategory: {},
+    bySubcategory: {},
+    overall: {
+      total: allCards.length,
+      mastered: 0,
+      successRate: 0,
+      totalAttempts: 0,
+      correctAttempts: 0
+    },
+    recentTrend: calculateRecentPerformance()
+  };
+
+  // Calculate performance for each card
+  allCards.forEach(card => {
+    const history = getHistory(card.word);
+    const totalAttempts = history.length;
+    const correctAttempts = history.filter(item => {
+      if (typeof item === 'string') {
+        return item === 'R';
+      } else {
+        return item.result === 'R';
+      }
+    }).length;
+    
+    const successRate = totalAttempts > 0 ? (correctAttempts / totalAttempts) * 100 : 0;
+    
+    // Update overall stats
+    stats.overall.totalAttempts += totalAttempts;
+    stats.overall.correctAttempts += correctAttempts;
+    
+    // Update category stats
+    if (!stats.byCategory[card.categoria]) {
+      stats.byCategory[card.categoria] = { total: 0, attempts: 0, correct: 0, successRate: 0 };
+    }
+    stats.byCategory[card.categoria].total++;
+    stats.byCategory[card.categoria].attempts += totalAttempts;
+    stats.byCategory[card.categoria].correct += correctAttempts;
+    
+    // Update subcategory stats
+    if (!stats.bySubcategory[card.subcategoria]) {
+      stats.bySubcategory[card.subcategoria] = { total: 0, attempts: 0, correct: 0, successRate: 0 };
+    }
+    stats.bySubcategory[card.subcategoria].total++;
+    stats.bySubcategory[card.subcategoria].attempts += totalAttempts;
+    stats.bySubcategory[card.subcategoria].correct += correctAttempts;
+    
+    // Check if mastered (80% or higher success rate with at least 3 attempts)
+    if (successRate >= 80 && totalAttempts >= 3) {
+      stats.overall.mastered++;
+    }
+  });
+  
+  // Calculate overall success rate
+  stats.overall.successRate = stats.overall.totalAttempts > 0 ? 
+    (stats.overall.correctAttempts / stats.overall.totalAttempts) * 100 : 0;
+  
+  // Calculate category success rates
+  for (const category in stats.byCategory) {
+    stats.byCategory[category].successRate = 
+      stats.byCategory[category].attempts > 0 ? 
+      (stats.byCategory[category].correct / stats.byCategory[category].attempts) * 100 : 0;
+  }
+  
+  // Calculate subcategory success rates
+  for (const subcategory in stats.bySubcategory) {
+    stats.bySubcategory[subcategory].successRate = 
+      stats.bySubcategory[subcategory].attempts > 0 ? 
+      (stats.bySubcategory[subcategory].correct / stats.bySubcategory[subcategory].attempts) * 100 : 0;
+  }
+  
+  return stats;
+}
+
+// Function to create trend chart
+function createTrendChart(trendData) {
+  const canvas = document.getElementById('trendChart');
+  const ctx = canvas.getContext('2d');
+  
+  // Check if chart already exists using Chart.js method
+  if (Chart.getChart(canvas)) {
+    Chart.getChart(canvas).destroy();
+  }
+  
+  // Format dates for display (show as MM/DD)
+  const formattedDates = trendData.map(item => {
+    const dateParts = item.date.split('-');
+    return `${dateParts[1]}/${dateParts[2]}`;
+  });
+  
+  // Calculate success rates
+  const successRates = trendData.map(item => 
+    item.total > 0 ? (item.correct / item.total) * 100 : 0
+  );
+  
+  return new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: formattedDates,
+      datasets: [{
+        label: 'Daily Success Rate (%)',
+        data: successRates,
+        fill: false,
+        borderColor: 'rgba(156, 39, 176, 1)',
+        backgroundColor: 'rgba(156, 39, 176, 0.2)',
+        tension: 0.1,
+        pointBackgroundColor: 'rgba(156, 39, 176, 1)',
+        pointRadius: 4,
+        pointHoverRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 100,
+          title: {
+            display: true,
+            text: 'Success Rate (%)'
+          }
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'Date'
+          }
+        }
+      },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const index = context.dataIndex;
+              const correct = trendData[index].correct;
+              const total = trendData[index].total;
+              return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}% (${correct}/${total} correct)`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// Function to display statistics
+function displayStats() {
+  try {
+    // Check if Chart.js is loaded
+    if (typeof Chart === "undefined") {
+      alert("Chart.js library not loaded. Please check your internet connection.");
+      return;
+    }
+    
+    const stats = calculateStats();
+    
+    // Update overall stats
+    document.getElementById('total-cards').textContent = stats.overall.total;
+    document.getElementById('mastered-cards').textContent = stats.overall.mastered;
+    document.getElementById('success-rate').textContent = `${stats.overall.successRate.toFixed(1)}%`;
+    
+    // Create category chart
+    const categoryCtx = document.getElementById('categoryChart');
+    if (categoryCtx) {
+      createCategoryChart(stats.byCategory);
+    } else {
+      console.error("Category chart canvas not found");
+    }
+    
+    // Create subcategory chart
+    const subcategoryCtx = document.getElementById('subcategoryChart');
+    if (subcategoryCtx) {
+      createSubcategoryChart(stats.bySubcategory);
+    } else {
+      console.error("Subcategory chart canvas not found");
+    }
+
+    createTrendChart(stats.recentTrend);
+    
+  } catch (error) {
+    console.error("Error displaying stats:", error);
+    alert("Error displaying statistics: " + error.message);
+  }
+}
+
+
+// Function to create category chart
+function createCategoryChart(categoryData) {
+  const ctx = document.getElementById('categoryChart').getContext('2d');
+  
+  // Destroy existing chart if it exists
+  if (categoryChartInstance) {
+    categoryChartInstance.destroy();
+  }
+
+  const categories = Object.keys(categoryData);
+  const successRates = categories.map(cat => categoryData[cat].successRate);
+  
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: categories,
+      datasets: [{
+        label: 'Success Rate (%)',
+        data: successRates,
+        backgroundColor: 'rgba(25, 118, 210, 0.7)',
+        borderColor: 'rgba(25, 118, 210, 1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 100,
+          title: {
+            display: true,
+            text: 'Success Rate (%)'
+          }
+        }
+      }
+    }
+  });
+}
+
+function destroyAllCharts() {
+  if (categoryChartInstance) {
+    categoryChartInstance.destroy();
+    categoryChartInstance = null;
+  }
+  
+  if (subcategoryChartInstance) {
+    subcategoryChartInstance.destroy();
+    subcategoryChartInstance = null;
+  }
+  
+  if (trendChartInstance) {
+    trendChartInstance.destroy();
+    trendChartInstance = null;
+  }
+}
+
+// Function to create subcategory chart
+function createSubcategoryChart(subcategoryData) {
+  const ctx = document.getElementById('subcategoryChart').getContext('2d');
+  
+  const subcategories = Object.keys(subcategoryData);
+  const successRates = subcategories.map(sub => subcategoryData[sub].successRate);
+  
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: subcategories,
+      datasets: [{
+        label: 'Success Rate (%)',
+        data: successRates,
+        backgroundColor: 'rgba(76, 175, 80, 0.7)',
+        borderColor: 'rgba(76, 175, 80, 1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
+      scales: {
+        x: {
+          beginAtZero: true,
+          max: 100,
+          title: {
+            display: true,
+            text: 'Success Rate (%)'
+          }
+        }
+      }
+    }
+  });
+}
+
+// Function to create trend chart
+function createTrendChart(trendData) {
+  const ctx = document.getElementById('trendChart').getContext('2d');
+  
+  const dates = trendData.map(item => item.date);
+  const successRates = trendData.map(item => 
+    item.total > 0 ? (item.correct / item.total) * 100 : 0
+  );
+  
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: dates,
+      datasets: [{
+        label: 'Daily Success Rate (%)',
+        data: successRates,
+        fill: false,
+        borderColor: 'rgba(156, 39, 176, 1)',
+        tension: 0.1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 100,
+          title: {
+            display: true,
+            text: 'Success Rate (%)'
+          }
+        }
+      }
+    }
+  });
 }
 
 </script>
