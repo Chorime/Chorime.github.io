@@ -7,6 +7,12 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <title>Kanji</title>
   <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #f0f0f0; /* same as stats background */
+    }
     body {
       font-family: sans-serif;
       display: flex;
@@ -16,11 +22,9 @@
       margin: 0;
       background: #f0f0f0;
       overflow: auto; 
-      overflow-x: hidden;
       max-width: 100%;
-      position: relative;
     }
-
+    
     .hidden { display: none; }
 
     /* Menu */
@@ -136,13 +140,19 @@
       border-radius: 12px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.1);
       width: 100%;
-      max-width: 600px;
-      overflow: visible; /* Ensure charts aren't clipped */
-      overflow-x: hidden;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+
+    .stats-section canvas {
+      width: 100% !important;   /* force charts to scale */
+      height: auto !important;  /* keep proportions */
+      display: block;
     }
 
     .stats{
       overflow-x: hidden !important;
+      box-sizing: border-box;
     }
 
     .hidden { 
@@ -160,6 +170,7 @@
       grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
       gap: 15px;
       margin-bottom: 20px;
+      box-sizing: border-box;
     }
     /* Review options screen */
 .input-group {
@@ -312,6 +323,7 @@
       width: 100%;
       overflow: visible;
       margin: 15px 0;
+      box-sizing: border-box;
     }
     
     .chart-container canvas {
@@ -321,7 +333,34 @@
     #categoryChart-container {
       margin-top: 10px; /* Add some space at the top */
     }
+
+    #stats.screen-container {
+      display: block;
+      overflow-y: auto;
+      overflow-x: hidden;
+      margin: 0 auto;
+      max-height: 90vh;
+      width:100%;
+      max-width: 100%;
+      padding: 20px 15px;
+      -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    }
     @media (max-width: 768px) {
+      #stats.screen-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;        /* full width */
+        min-height: 100dvh;       /* full height */
+        max-width: none;     /* remove panel constraint */
+        margin: 0;           /* no centering */
+        border-radius: 0;    /* flush with edges */
+        background: #f0f0f0;    /* solid background */
+        z-index: 999;        /* sit on top of everything */
+        overflow-y: auto;    /* scroll if content too tall */
+        padding: 10px;       /* smaller padding for mobile */
+        box-sizing: border-box;
+      } 
       .chart-container {
         height: 220px;
         margin: 10px 0;
@@ -372,16 +411,10 @@
   width: 100%;
   max-width: 100%; /* Limit width to prevent overflow */
   margin: 0 auto; /* Center the container */
+  box-sizing: border-box;
 }
 
 /* Ensure the stats screen has proper spacing */
-#stats.screen-container {
-   display: block;
-  overflow-y: auto;
-  max-height: 90vh;
-  padding: 20px 15px;
-  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-}
 
 #stats.screen-container h1 {
   margin-top: 0;
