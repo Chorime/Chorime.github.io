@@ -140,7 +140,7 @@
     }
 
     .stats{
-      overflow-x: hidden;
+      overflow-x: hidden !important;
     }
 
     .hidden { 
@@ -159,6 +159,127 @@
       gap: 15px;
       margin-bottom: 20px;
     }
+    /* Review options screen */
+.input-group {
+  margin: 20px 0;
+  text-align: left;
+  width: 100%;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* Custom select styling */
+.select-wrapper {
+  position: relative;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.threshold-select {
+  width: 100%;
+  padding: 16px 50px 16px 16px;
+  font-size: 16px; /* Prevents zoom on iOS */
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  background-color: white;
+  appearance: none; /* Remove default arrow */
+  -webkit-appearance: none; /* Remove default arrow for Safari */
+  -moz-appearance: none; /* Remove default arrow for Firefox */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.threshold-select:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.2);
+}
+
+.select-arrow {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #666;
+  font-size: 14px;
+}
+
+/* Button group styling */
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+  .input-group {
+    margin: 15px 0;
+  }
+  
+  .input-group label {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+  
+  .threshold-select {
+    padding: 14px 45px 14px 14px;
+    font-size: 16px; /* Maintain 16px to prevent zoom */
+  }
+  
+  .select-arrow {
+    right: 14px;
+  }
+  
+  #review-options h2 {
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .input-group {
+    margin: 12px 0;
+  }
+  
+  .threshold-select {
+    padding: 12px 40px 12px 12px;
+    border-radius: 10px;
+  }
+  
+  .select-arrow {
+    right: 12px;
+  }
+  
+  .button-group {
+    max-width: 100%;
+  }
+}
+
+/* Focus states for accessibility */
+.threshold-select:focus {
+  border-color: #1976d2;
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.2);
+}
+
+/* Hover effect for non-touch devices */
+@media (hover: hover) {
+  .threshold-select:hover {
+    border-color: #999;
+  }
+}
 
     .statsTitles{
       text-align: center;
@@ -309,19 +430,28 @@
   </div>
 
 <!-- Review Options -->
-<div id="review-options" class="hidden" style="text-align:center;">
-  <h2>Repasar Errores</h2>
-  <label for="wrongThreshold">Minimo de errores en los ultimos 5 intentos:</label>
-  <select id="wrongThreshold">
-    <option value="1">1+</option>
-    <option value="2">2+</option>
-    <option value="3">3+</option>
-    <option value="4">4+</option>
-    <option value="5">5 (siempre mal)</option>
-  </select>
-  <br><br>
-  <button class="menu-button" onclick="startReviewWrong()">Empezar Repaso</button>
-  <button class="back-menu" onclick="goBackToMenu()">⬅ Volver al Menu</button>
+<!-- Review Options -->
+<div id="review-options" class="hidden screen-container">
+  <h2 style="text-align: center;">Repasar Errores</h2>
+  
+  <div class="input-group">
+    <label for="wrongThreshold">Minimo de errores en los ultimos 10 intentos:</label>
+    <div class="select-wrapper">
+      <select id="wrongThreshold" class="threshold-select">
+        <option value="1">1+ errores</option>
+        <option value="2">2+ errores</option>
+        <option value="3">3+ errores</option>
+        <option value="4">4+ errores</option>
+        <option value="5">5+ errores</option>
+      </select>
+      <div class="select-arrow">▼</div>
+    </div>
+  </div>
+
+  <div class="button-group">
+    <button class="menu-button" onclick="startReviewWrong()">Empezar Repaso</button>
+    <button class="back-menu" onclick="goBackToMenu()">⬅ Volver al Menu</button>
+  </div>
 </div>
 
   <!-- Flashcard Screen -->
@@ -392,8 +522,10 @@
       <canvas id="trendChart" width="400" height="250"></canvas>
     </div>
   </div>
-
-  <button class="back-menu" onclick="goBackToMenu()">⬅ Volver al Menu</button>
+  <div style="text-align: center;"> 
+    <button class="back-menu" style="text-align: center;" onclick="goBackToMenu()">⬅ Volver al Menu</button>
+  </div>
+  
 </div>
 
 
