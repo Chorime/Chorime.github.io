@@ -136,6 +136,7 @@
       width: 100%;
       max-width: 600px;
       overflow: visible; /* Ensure charts aren't clipped */
+      overflow-x: hidden;
     }
 
     .hidden { 
@@ -153,6 +154,11 @@
       grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
       gap: 15px;
       margin-bottom: 20px;
+    }
+
+    .statsTitles{
+      text-align: center;
+      font-size: 1.7rem;
     }
 
     .stat-card {
@@ -343,7 +349,7 @@
 <!-- Stats screen -->
 <div id="stats" class="screen-container hidden">
   <div class="stats-section">
-  <h2>Overall Performance</h2>
+  <div class="statsTitles" style="padding:20px; "><b>Overall Performance</b></div>
   <div class="overall-stats-container">
     <div class="stats-grid">
       <div class="stat-card">
@@ -363,21 +369,21 @@
 </div>
 
   <div class="stats-section">
-    <h2>Performance por Categoria</h2>
+    <div class="statsTitles">Performance por Categoria</div>
     <div class="chart-container">
       <canvas id="categoryChart" width="400" height="250"></canvas>
     </div>
   </div>
 
   <div class="stats-section">
-    <h2>Performance por Subcategoria</h2>
+    <div class="statsTitles">Performance por Subcategoria</div>
     <div class="chart-container">
       <canvas id="subcategoryChart" width="400" height="300"></canvas>
     </div>
   </div>
 
   <div class="stats-section">
-    <h2>Performance Reciente</h2>
+    <div class="statsTitles">Performance Reciente</div>
     <div class="chart-container">
       <canvas id="trendChart" width="400" height="250"></canvas>
     </div>
