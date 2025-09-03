@@ -138,9 +138,11 @@
       overflow: visible; /* Ensure charts aren't clipped */
       overflow-x: hidden;
     }
+
     .stats{
       overflow-x: hidden;
     }
+
     .hidden { 
       display: none !important; /* Add !important to ensure it overrides other styles */
     }
@@ -618,7 +620,8 @@ function startReviewWrong() {
 
     // show meaning + recent history
     const history = getHistory(currentCard.word);
-    const displayHistory = history.map(item => {
+    const recentHistory = history.slice(-5);
+    const displayHistory = recentHistory.map(item => {
     if (typeof item === 'string') {
       return item === "R" ? "✅" : "❌";
     } else {
@@ -634,7 +637,8 @@ function startReviewWrong() {
     front.textContent = currentCard.word;
     // show meaning + recent history
     const history = getHistory(currentCard.word);
-      const displayHistory = history.map(item => {
+    const recentHistory = history.slice(-5);
+      const displayHistory = recentHistory.map(item => {
     if (typeof item === 'string') {
       return item === "R" ? "✅" : "❌";
     } else {
@@ -697,7 +701,14 @@ function filterWrongCards(threshold) {
   // const allCards = Object.values(cardSets).flat(); // flatten all sets
   return allCards.filter(card => {
     const history = getHistory(card.word);
-    const wrongs = history.filter(r => r === "W").length;
+        const wrongs = history.filter(item => {
+      if (typeof item === 'string') {
+        return item === 'W';
+      } else if (typeof item === 'object' && item !== null) {
+        return item.result === 'W';
+      }
+      return false;
+    }).length;
     return wrongs >= threshold;
   });
 }
@@ -1223,6 +1234,5 @@ function createTrendChart(trendData) {
 
 </body>
 </html>
-
 
 
